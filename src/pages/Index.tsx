@@ -3,7 +3,7 @@ import { FileUpload } from "@/components/FileUpload";
 import { ChatInterface } from "@/components/ChatInterface";
 import { ClassCard } from "@/components/ClassCard";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Home, Plus, ArrowLeft } from "lucide-react";
 import { Class } from "@/types/class";
 
 const Index = () => {
@@ -30,7 +30,41 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold text-gray-900">Class Dashboard</h1>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              {(showUpload || selectedClass) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setShowUpload(false);
+                    setSelectedClass(null);
+                  }}
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setShowUpload(false);
+                  setSelectedClass(null);
+                }}
+              >
+                <Home className="h-5 w-5" />
+              </Button>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {selectedClass ? "Class Chat" : showUpload ? "Add New Class" : "Class Dashboard"}
+              </h1>
+            </div>
+            {!showUpload && !selectedClass && (
+              <Button onClick={() => setShowUpload(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add New Class
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -38,13 +72,6 @@ const Index = () => {
         <div className="px-4 py-6 sm:px-0">
           {!showUpload && !selectedClass && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-gray-800">Your Classes</h2>
-                <Button onClick={() => setShowUpload(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add New Class
-                </Button>
-              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {classes.map((classItem) => (
                   <ClassCard
@@ -66,18 +93,10 @@ const Index = () => {
           {selectedClass && (
             <div className="flex flex-col lg:flex-row gap-8 items-start">
               <div className="w-full lg:w-1/3">
-                <Button 
-                  variant="outline" 
-                  className="mb-4"
-                  onClick={() => setSelectedClass(null)}
-                >
-                  Back to Dashboard
-                </Button>
                 <div className="bg-white p-4 rounded-lg shadow">
                   <h2 className="text-xl font-semibold mb-4">
                     {classes.find(c => c.id === selectedClass)?.name}
                   </h2>
-                  {/* Add more class details here */}
                 </div>
               </div>
               <div className="w-full lg:w-2/3">
