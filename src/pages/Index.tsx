@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { ChatInterface } from "@/components/ChatInterface";
 import { ClassCard } from "@/components/ClassCard";
+import { PDFViewer } from "@/components/PDFViewer";
 import { Button } from "@/components/ui/button";
 import { Home, Plus, ArrowLeft } from "lucide-react";
 import { Class } from "@/types/class";
@@ -18,6 +19,7 @@ const Index = () => {
       syllabusName: "CS101_Syllabus.pdf",
       uploadDate: "2024-02-20T10:00:00Z",
       lastAccessed: "2024-02-21T15:30:00Z",
+      pdfUrl: "https://example.com/sample.pdf" // Add a sample PDF URL
     },
   ]);
 
@@ -25,6 +27,8 @@ const Index = () => {
     setSelectedClass(classId);
     setShowUpload(false);
   };
+
+  const selectedClassData = classes.find(c => c.id === selectedClass);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -90,16 +94,19 @@ const Index = () => {
             </div>
           )}
 
-          {selectedClass && (
+          {selectedClass && selectedClassData && (
             <div className="flex flex-col lg:flex-row gap-8 items-start">
-              <div className="w-full lg:w-1/3">
+              <div className="w-full lg:w-1/2">
                 <div className="bg-white p-4 rounded-lg shadow">
                   <h2 className="text-xl font-semibold mb-4">
-                    {classes.find(c => c.id === selectedClass)?.name}
+                    {selectedClassData.name}
                   </h2>
+                  {selectedClassData.pdfUrl && (
+                    <PDFViewer pdfUrl={selectedClassData.pdfUrl} />
+                  )}
                 </div>
               </div>
-              <div className="w-full lg:w-2/3">
+              <div className="w-full lg:w-1/2">
                 <ChatInterface />
               </div>
             </div>

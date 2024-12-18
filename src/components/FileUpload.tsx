@@ -13,6 +13,9 @@ export const FileUpload = () => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
+      // Create a URL for the PDF file
+      const pdfUrl = URL.createObjectURL(selectedFile);
+      console.log("PDF URL created:", pdfUrl);
       toast.success("PDF file selected successfully!");
     } else {
       toast.error("Please select a valid PDF file");
@@ -31,21 +34,33 @@ export const FileUpload = () => {
     }
 
     setLoading(true);
-    // TODO: Implement actual file upload logic
-    await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate upload
     
-    const newClass: Class = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: className,
-      syllabusName: file.name,
-      uploadDate: new Date().toISOString(),
-    };
-    
-    console.log("New class created:", newClass);
-    toast.success("Class created successfully!");
-    setLoading(false);
-    setFile(null);
-    setClassName("");
+    try {
+      // Create a URL for the PDF file
+      const pdfUrl = URL.createObjectURL(file);
+      
+      const newClass: Class = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: className,
+        syllabusName: file.name,
+        uploadDate: new Date().toISOString(),
+        pdfUrl: pdfUrl // Add the PDF URL to the class data
+      };
+      
+      console.log("New class created:", newClass);
+      toast.success("Class created successfully!");
+      
+      // Here you would typically save the class data to your backend
+      // For now, we're just storing it in local state
+      
+    } catch (error) {
+      console.error("Error creating class:", error);
+      toast.error("Failed to create class");
+    } finally {
+      setLoading(false);
+      setFile(null);
+      setClassName("");
+    }
   };
 
   return (

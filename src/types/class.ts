@@ -4,4 +4,5 @@ export interface Class {
   syllabusName: string;
   uploadDate: string;
   lastAccessed?: string;
+  pdfUrl?: string;
 }
