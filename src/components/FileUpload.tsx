@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Class } from "@/types/class";
 
 export const FileUpload = () => {
   const [file, setFile] = useState<File | null>(null);
