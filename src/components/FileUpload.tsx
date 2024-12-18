@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 export const FileUpload = () => {
   const [file, setFile] = useState<File | null>(null);
+  const [className, setClassName] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,17 +24,45 @@ export const FileUpload = () => {
       return;
     }
 
+    if (!className.trim()) {
+      toast.error("Please enter a class name");
+      return;
+    }
+
     setLoading(true);
     // TODO: Implement actual file upload logic
     await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate upload
-    toast.success("Syllabus uploaded successfully!");
+    
+    const newClass: Class = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: className,
+      syllabusName: file.name,
+      uploadDate: new Date().toISOString(),
+    };
+    
+    console.log("New class created:", newClass);
+    toast.success("Class created successfully!");
     setLoading(false);
+    setFile(null);
+    setClassName("");
   };
 
   return (
     <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md animate-fade-in">
-      <h2 className="text-2xl font-semibold mb-4 text-gray-800">Upload Syllabus</h2>
+      <h2 className="text-2xl font-semibold mb-4 text-gray-800">Create New Class</h2>
       <div className="space-y-4">
+        <div>
+          <label htmlFor="class-name" className="block text-sm font-medium text-gray-700 mb-1">
+            Class Name
+          </label>
+          <Input
+            id="class-name"
+            type="text"
+            placeholder="Enter class name"
+            value={className}
+            onChange={(e) => setClassName(e.target.value)}
+          />
+        </div>
         <div className="flex items-center justify-center w-full">
           <label
             htmlFor="file-upload"
@@ -75,10 +105,10 @@ export const FileUpload = () => {
         )}
         <Button
           onClick={handleUpload}
-          disabled={!file || loading}
+          disabled={!file || !className.trim() || loading}
           className="w-full"
         >
-          {loading ? "Uploading..." : "Upload Syllabus"}
+          {loading ? "Creating Class..." : "Create Class"}
         </Button>
       </div>
     </div>
