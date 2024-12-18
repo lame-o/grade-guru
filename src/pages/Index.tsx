@@ -10,21 +10,15 @@ import { Class } from "@/types/class";
 const Index = () => {
   const [showUpload, setShowUpload] = useState(false);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [classes, setClasses] = useState<Class[]>([]);
   
-  // Mock data - replace with actual data storage later
-  const [classes] = useState<Class[]>([
-    {
-      id: "1",
-      name: "Introduction to Computer Science",
-      syllabusName: "CS101_Syllabus.pdf",
-      uploadDate: "2024-02-20T10:00:00Z",
-      lastAccessed: "2024-02-21T15:30:00Z",
-      pdfUrl: "https://example.com/sample.pdf" // Add a sample PDF URL
-    },
-  ]);
-
   const handleClassClick = (classId: string) => {
     setSelectedClass(classId);
+    setShowUpload(false);
+  };
+
+  const handleClassCreated = (newClass: Class) => {
+    setClasses(prevClasses => [...prevClasses, newClass]);
     setShowUpload(false);
   };
 
@@ -85,12 +79,17 @@ const Index = () => {
                   />
                 ))}
               </div>
+              {classes.length === 0 && (
+                <div className="text-center text-gray-500">
+                  No classes yet. Click "Add New Class" to get started.
+                </div>
+              )}
             </div>
           )}
 
           {showUpload && (
             <div className="flex justify-center">
-              <FileUpload />
+              <FileUpload onClassCreated={handleClassCreated} />
             </div>
           )}
 

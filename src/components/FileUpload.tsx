@@ -4,7 +4,11 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Class } from "@/types/class";
 
-export const FileUpload = () => {
+interface FileUploadProps {
+  onClassCreated: (newClass: Class) => void;
+}
+
+export const FileUpload = ({ onClassCreated }: FileUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [className, setClassName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -13,7 +17,6 @@ export const FileUpload = () => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
-      // Create a URL for the PDF file
       const pdfUrl = URL.createObjectURL(selectedFile);
       console.log("PDF URL created:", pdfUrl);
       toast.success("PDF file selected successfully!");
@@ -36,7 +39,6 @@ export const FileUpload = () => {
     setLoading(true);
     
     try {
-      // Create a URL for the PDF file
       const pdfUrl = URL.createObjectURL(file);
       
       const newClass: Class = {
@@ -44,14 +46,12 @@ export const FileUpload = () => {
         name: className,
         syllabusName: file.name,
         uploadDate: new Date().toISOString(),
-        pdfUrl: pdfUrl // Add the PDF URL to the class data
+        pdfUrl: pdfUrl
       };
       
       console.log("New class created:", newClass);
+      onClassCreated(newClass); // Call the callback with the new class
       toast.success("Class created successfully!");
-      
-      // Here you would typically save the class data to your backend
-      // For now, we're just storing it in local state
       
     } catch (error) {
       console.error("Error creating class:", error);
