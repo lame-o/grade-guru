@@ -19,6 +19,7 @@ export const ClassDetail = ({ classData }: ClassDetailProps) => {
     toast({
       title: "PDF Committed to Knowledge",
       description: "The PDF content has been added to the chatbot's knowledge base.",
+      duration: 5000,
     });
   };
 
