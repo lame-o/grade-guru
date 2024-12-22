@@ -10,8 +10,6 @@ interface ClassGridProps {
 export const ClassGrid = ({ classes, onClassClick }: ClassGridProps) => {
   return (
     <div className="space-y-6">
-      <WeeklyCalendar classes={classes} />
-      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {classes.map((classItem) => (
           <ClassCard
@@ -26,6 +24,8 @@ export const ClassGrid = ({ classes, onClassClick }: ClassGridProps) => {
           No classes yet. Click "Add New Class" to get started.
         </div>
       )}
+      
+      <WeeklyCalendar classes={classes} />
     </div>
   );
 };
