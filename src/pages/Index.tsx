@@ -1,15 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { supabase } from "@/integrations/supabase/client";
 import { FileUpload } from "@/components/FileUpload";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { ClassGrid } from "@/components/ClassGrid";
 import { ClassDetail } from "@/components/ClassDetail";
 import { Class } from "@/types/class";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [showUpload, setShowUpload] = useState(false);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [classes, setClasses] = useState<Class[]>([]);
-  
+  const [session, setSession] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const handleClassClick = (classId: string) => {
     setSelectedClass(classId);
     setShowUpload(false);
@@ -26,6 +48,27 @@ const Index = () => {
   };
 
   const selectedClassData = classes.find(c => c.id === selectedClass);
+
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Grade Guru</h1>
+            <p className="text-gray-600 mb-8">Your personal syllabus assistant</p>
+          </div>
+          <div className="bg-white p-8 rounded-lg shadow-md">
+            <Auth
+              supabaseClient={supabase}
+              appearance={{ theme: ThemeSupa }}
+              theme="light"
+              providers={[]}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
