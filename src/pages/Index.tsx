@@ -60,10 +60,41 @@ const Index = () => {
           <div className="bg-white p-8 rounded-lg shadow-md">
             <Auth
               supabaseClient={supabase}
-              appearance={{ theme: ThemeSupa }}
+              appearance={{ 
+                theme: ThemeSupa,
+                variables: {
+                  default: {
+                    colors: {
+                      brand: '#2563eb',
+                      brandAccent: '#1d4ed8',
+                    },
+                  },
+                },
+                className: {
+                  container: 'flex flex-col gap-4',
+                  label: 'text-sm font-medium text-gray-700',
+                  input: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500',
+                  button: 'w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500',
+                },
+              }}
               theme="light"
               providers={[]}
+              localization={{
+                variables: {
+                  sign_up: {
+                    password_label: 'Password (minimum 6 characters)',
+                    email_label: 'Email',
+                    button_label: 'Sign up',
+                  },
+                },
+              }}
             />
+            <div className="mt-4 text-sm text-gray-600">
+              <p>Password requirements:</p>
+              <ul className="list-disc list-inside mt-1">
+                <li>Minimum 6 characters</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
