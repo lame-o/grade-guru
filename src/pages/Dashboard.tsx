@@ -3,11 +3,12 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { FileUpload } from "@/components/FileUpload";
-import { DashboardHeader } from "@/components/DashboardHeader";
 import { ClassGrid } from "@/components/ClassGrid";
 import { ClassDetail } from "@/components/ClassDetail";
 import { Class } from "@/types/class";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const Index = () => {
   const [showUpload, setShowUpload] = useState(false);
@@ -70,31 +71,10 @@ const Index = () => {
                     },
                   },
                 },
-                className: {
-                  container: 'flex flex-col gap-4',
-                  label: 'text-sm font-medium text-gray-700',
-                  input: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500',
-                  button: 'w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500',
-                },
               }}
               theme="light"
               providers={[]}
-              localization={{
-                variables: {
-                  sign_up: {
-                    password_label: 'Password (minimum 6 characters)',
-                    email_label: 'Email',
-                    button_label: 'Sign up',
-                  },
-                },
-              }}
             />
-            <div className="mt-4 text-sm text-gray-600">
-              <p>Password requirements:</p>
-              <ul className="list-disc list-inside mt-1">
-                <li>Minimum 6 characters</li>
-              </ul>
-            </div>
           </div>
         </div>
       </div>
@@ -103,31 +83,54 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHeader 
-        showUpload={showUpload}
-        selectedClass={selectedClass}
-        onBackClick={handleBack}
-        onHomeClick={handleBack}
-        onAddNewClick={() => setShowUpload(true)}
-      />
-
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {!showUpload && !selectedClass && (
-            <ClassGrid 
-              classes={classes}
-              onClassClick={handleClassClick}
-            />
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Class Dashboard
+                </h1>
+                <Button onClick={() => setShowUpload(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New Class
+                </Button>
+              </div>
+              <ClassGrid 
+                classes={classes}
+                onClassClick={handleClassClick}
+              />
+            </div>
           )}
 
           {showUpload && (
-            <div className="flex justify-center">
-              <FileUpload onClassCreated={handleClassCreated} />
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Add New Class
+                </h1>
+                <Button variant="outline" onClick={handleBack}>
+                  Back to Dashboard
+                </Button>
+              </div>
+              <div className="flex justify-center">
+                <FileUpload onClassCreated={handleClassCreated} />
+              </div>
             </div>
           )}
 
           {selectedClass && selectedClassData && (
-            <ClassDetail classData={selectedClassData} />
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Class Chat
+                </h1>
+                <Button variant="outline" onClick={handleBack}>
+                  Back to Dashboard
+                </Button>
+              </div>
+              <ClassDetail classData={selectedClassData} />
+            </div>
           )}
         </div>
       </main>
