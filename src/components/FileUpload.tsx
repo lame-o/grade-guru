@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Class } from "@/types/class";
+import { useSession } from "@supabase/auth-helpers-react";
+import { uploadPDFToStorage, extractPDFText, savePDFToDatabase } from "@/utils/pdfUtils";
 
 interface FileUploadProps {
   onClassCreated: (newClass: Class) => void;
@@ -12,13 +14,12 @@ export const FileUpload = ({ onClassCreated }: FileUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [className, setClassName] = useState("");
   const [loading, setLoading] = useState(false);
+  const session = useSession();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile && selectedFile.type === "application/pdf") {
       setFile(selectedFile);
-      const pdfUrl = URL.createObjectURL(selectedFile);
-      console.log("PDF URL created:", pdfUrl);
       toast.success("PDF file selected successfully!");
     } else {
       toast.error("Please select a valid PDF file");
@@ -26,31 +27,41 @@ export const FileUpload = ({ onClassCreated }: FileUploadProps) => {
   };
 
   const handleUpload = async () => {
-    if (!file) {
-      toast.error("Please select a file first");
-      return;
-    }
-
-    if (!className.trim()) {
-      toast.error("Please enter a class name");
+    if (!file || !className.trim() || !session?.user?.id) {
+      toast.error("Please select a file and enter a class name");
       return;
     }
 
     setLoading(true);
     
     try {
-      const pdfUrl = URL.createObjectURL(file);
-      
+      // Upload PDF to storage
+      const pdfUrl = await uploadPDFToStorage(file, session.user.id);
+      console.log("PDF uploaded to storage:", pdfUrl);
+
+      // Extract text content
+      const pdfContent = await extractPDFText(file);
+      console.log("PDF text extracted");
+
+      // Save to database
+      await savePDFToDatabase(
+        session.user.id,
+        className,
+        file.name,
+        pdfUrl,
+        pdfContent
+      );
+      console.log("PDF saved to database");
+
       const newClass: Class = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: crypto.randomUUID(),
         name: className,
         syllabusName: file.name,
         uploadDate: new Date().toISOString(),
         pdfUrl: pdfUrl
       };
       
-      console.log("New class created:", newClass);
-      onClassCreated(newClass); // Call the callback with the new class
+      onClassCreated(newClass);
       toast.success("Class created successfully!");
       
     } catch (error) {

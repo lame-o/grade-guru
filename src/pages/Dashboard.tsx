@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
-import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@supabase/auth-helpers-react";
 import { FileUpload } from "@/components/FileUpload";
 import { ClassGrid } from "@/components/ClassGrid";
 import { ClassDetail } from "@/components/ClassDetail";
@@ -9,29 +7,34 @@ import { Class } from "@/types/class";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { getUserPDFs } from "@/utils/pdfUtils";
+import { toast } from "sonner";
 
-const Index = () => {
+const Dashboard = () => {
   const [showUpload, setShowUpload] = useState(false);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [classes, setClasses] = useState<Class[]>([]);
-  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const session = useSession();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    const fetchClasses = async () => {
+      if (session?.user?.id) {
+        try {
+          const userPDFs = await getUserPDFs(session.user.id);
+          setClasses(userPDFs);
+        } catch (error) {
+          console.error("Error fetching PDFs:", error);
+          toast.error("Failed to load your classes");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    fetchClasses();
+  }, [session?.user?.id]);
 
   const handleClassClick = (classId: string) => {
     setSelectedClass(classId);
@@ -51,31 +54,16 @@ const Index = () => {
   const selectedClassData = classes.find(c => c.id === selectedClass);
 
   if (!session) {
+    navigate('/login');
+    return null;
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Grade Guru</h1>
-            <p className="text-gray-600 mb-8">Your personal syllabus assistant</p>
-          </div>
-          <div className="bg-white p-8 rounded-lg shadow-md">
-            <Auth
-              supabaseClient={supabase}
-              appearance={{ 
-                theme: ThemeSupa,
-                variables: {
-                  default: {
-                    colors: {
-                      brand: '#2563eb',
-                      brandAccent: '#1d4ed8',
-                    },
-                  },
-                },
-              }}
-              theme="light"
-              providers={[]}
-            />
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your classes...</p>
         </div>
       </div>
     );
@@ -138,4 +126,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Dashboard;

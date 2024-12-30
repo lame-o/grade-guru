@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      class_pdfs: {
+        Row: {
+          created_at: string
+          id: string
+          last_accessed: string | null
+          name: string
+          pdf_content: string | null
+          pdf_url: string | null
+          syllabus_name: string
+          upload_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_accessed?: string | null
+          name: string
+          pdf_content?: string | null
+          pdf_url?: string | null
+          syllabus_name: string
+          upload_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_accessed?: string | null
+          name?: string
+          pdf_content?: string | null
+          pdf_url?: string | null
+          syllabus_name?: string
+          upload_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_pdfs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
