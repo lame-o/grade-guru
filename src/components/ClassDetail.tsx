@@ -7,6 +7,7 @@ import { Plus, FileText, Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { commitSyllabusToKnowledge } from "@/utils/pdfUtils";
 import { PDFViewer } from "@/components/PDFViewer";
+import { useNavigate } from "react-router-dom";
 
 interface ClassDetailProps {
   classData: Class;
@@ -14,9 +15,9 @@ interface ClassDetailProps {
 }
 
 export const ClassDetail = ({ classData, onUpdate }: ClassDetailProps) => {
-  const [showUpload, setShowUpload] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleContentAdded = (newContent: Class) => {
     const updatedClass = {
@@ -30,7 +31,6 @@ export const ClassDetail = ({ classData, onUpdate }: ClassDetailProps) => {
       }]
     };
     onUpdate(updatedClass);
-    setShowUpload(false);
   };
 
   const handleCommitContent = async (contentId: string) => {
@@ -51,10 +51,10 @@ export const ClassDetail = ({ classData, onUpdate }: ClassDetailProps) => {
         duration: 5000,
       });
     } catch (error) {
-      console.error("Error committing content:", error);
+      console.error('Error committing content:', error);
       toast({
         title: "Error",
-        description: "Failed to commit content. Please try again.",
+        description: "Failed to commit content to knowledge base",
         variant: "destructive",
         duration: 5000,
       });
@@ -62,90 +62,84 @@ export const ClassDetail = ({ classData, onUpdate }: ClassDetailProps) => {
   };
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold text-gray-800">
-          {classData.name}
-        </h2>
-        <Button 
-          onClick={() => setShowUpload(true)}
-          className="gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Content
-        </Button>
-      </div>
-
-      <div className="flex gap-8">
-        <div className="w-3/4">
-          {showUpload ? (
-            <FileUpload 
-              existingClass={classData}
-              onClassCreated={handleContentAdded}
-              onUpdate={onUpdate}
-              isAdditionalContent={true}
-            />
-          ) : (
-            <ChatInterface classData={classData} />
-          )}
-        </div>
-
-        <div className="w-1/4 space-y-4">
-          <div className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-4">Class Materials</h3>
-            
-            {/* Syllabus */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-500">Syllabus</h4>
-              <Button
-                variant={selectedPdf === classData.pdfUrl ? "default" : "outline"}
-                className="w-full justify-start gap-2"
-                onClick={() => setSelectedPdf(classData.pdfUrl || null)}
-              >
-                <FileText className="w-4 h-4" />
-                {classData.syllabusName}
-              </Button>
-            </div>
-
-            {/* Additional Content */}
-            {classData.additionalContent && classData.additionalContent.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <h4 className="text-sm font-medium text-gray-500">Additional Content</h4>
+    <div className="space-y-6">
+      <div className="flex justify-between items-start">
+        <div className="space-y-4 flex-1">
+          <div className="flex items-center space-x-4">
+            <Button onClick={() => navigate(`add-content`)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Content
+            </Button>
+          </div>
+          
+          {classData.additionalContent && classData.additionalContent.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Additional Content</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {classData.additionalContent.map((content) => (
-                  <div key={content.id} className="space-y-1">
-                    <Button
-                      variant={selectedPdf === content.pdfUrl ? "default" : "outline"}
-                      className="w-full justify-start gap-2"
-                      onClick={() => setSelectedPdf(content.pdfUrl)}
-                    >
-                      <FileText className="w-4 h-4" />
-                      {content.name}
-                    </Button>
-                    {!content.isCommitted && (
+                  <div
+                    key={content.id}
+                    className="flex items-center justify-between p-4 bg-white rounded-lg shadow"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <FileText className="w-6 h-6 text-gray-500" />
+                      <div>
+                        <p className="font-medium">{content.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(content.uploadDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {content.isCommitted ? (
+                        <div className="flex items-center text-green-600">
+                          <Check className="w-4 h-4 mr-1" />
+                          <span className="text-sm">Committed</span>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCommitContent(content.id)}
+                        >
+                          Commit
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full text-xs gap-1 text-blue-600 hover:text-blue-800"
-                        onClick={() => handleCommitContent(content.id)}
+                        onClick={() => setSelectedPdf(content.pdfUrl)}
                       >
-                        <Check className="w-3 h-3" />
-                        Commit to Knowledge Base
+                        View
                       </Button>
-                    )}
+                    </div>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-
-          {/* PDF Preview */}
-          {selectedPdf && (
-            <div className="h-[calc(100vh-24rem)] bg-white p-4 rounded-lg shadow">
-              <PDFViewer pdfUrl={selectedPdf} />
             </div>
           )}
+
+          <div className="mt-6">
+            <ChatInterface classData={classData} />
+          </div>
         </div>
       </div>
+
+      {selectedPdf && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-4 rounded-lg w-[90vw] h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">PDF Viewer</h2>
+              <Button variant="ghost" onClick={() => setSelectedPdf(null)}>
+                Close
+              </Button>
+            </div>
+            <div className="flex-1">
+              <PDFViewer url={selectedPdf} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
