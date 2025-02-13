@@ -7,7 +7,7 @@ import { Class } from "@/types/class";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { getUserPDFs } from "@/utils/pdfUtils";
+import { getUserPDFs, deleteClass } from "@/utils/pdfUtils";
 import { toast } from "sonner";
 
 const Dashboard = () => {
@@ -41,9 +41,34 @@ const Dashboard = () => {
     setShowUpload(false);
   };
 
+  const handleClassDelete = async (classData: Class) => {
+    if (!session?.user?.id) return;
+
+    try {
+      await deleteClass(session.user.id, classData.name);
+      setClasses(prevClasses => prevClasses.filter(c => c.id !== classData.id));
+      // Reset selected class if we just deleted it
+      if (selectedClass === classData.id) {
+        setSelectedClass(null);
+      }
+      toast.success(`${classData.name} has been deleted`);
+    } catch (error) {
+      console.error('Error deleting class:', error);
+      toast.error('Failed to delete class');
+    }
+  };
+
   const handleClassCreated = (newClass: Class) => {
     setClasses(prevClasses => [...prevClasses, newClass]);
     setShowUpload(false);
+  };
+
+  const handleClassUpdated = (updatedClass: Class) => {
+    setClasses(prevClasses => 
+      prevClasses.map(cls => 
+        cls.id === updatedClass.id ? updatedClass : cls
+      )
+    );
   };
 
   const handleBack = () => {
@@ -87,6 +112,7 @@ const Dashboard = () => {
               <ClassGrid 
                 classes={classes}
                 onClassClick={handleClassClick}
+                onClassDelete={handleClassDelete}
               />
             </div>
           )}
@@ -97,9 +123,6 @@ const Dashboard = () => {
                 <h1 className="text-3xl font-bold text-gray-900">
                   Add New Class
                 </h1>
-                <Button variant="outline" onClick={handleBack}>
-                  Back to Dashboard
-                </Button>
               </div>
               <div className="flex justify-center">
                 <FileUpload onClassCreated={handleClassCreated} />
@@ -113,11 +136,11 @@ const Dashboard = () => {
                 <h1 className="text-3xl font-bold text-gray-900">
                   Class Chat
                 </h1>
-                <Button variant="outline" onClick={handleBack}>
-                  Back to Dashboard
-                </Button>
               </div>
-              <ClassDetail classData={selectedClassData} />
+              <ClassDetail 
+                classData={selectedClassData} 
+                onUpdate={handleClassUpdated}
+              />
             </div>
           )}
         </div>

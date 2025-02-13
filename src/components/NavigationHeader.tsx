@@ -1,13 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useSession } from "@supabase/auth-helpers-react";
 
 export const NavigationHeader = () => {
   const navigate = useNavigate();
   const session = useSession();
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -18,6 +19,11 @@ export const NavigationHeader = () => {
       console.error("Error logging out:", error);
       toast.error("Failed to log out");
     }
+  };
+
+  const handleDashboardClick = () => {
+    // Force a full reload of the dashboard page
+    window.location.href = '/dashboard';
   };
 
   return (
@@ -31,9 +37,11 @@ export const NavigationHeader = () => {
           <div className="flex items-center space-x-4">
             {session ? (
               <>
-                <Button onClick={() => navigate("/dashboard")}>
-                  Dashboard
-                </Button>
+                {location.pathname === '/dashboard' && (
+                  <Button onClick={handleDashboardClick}>
+                    Dashboard
+                  </Button>
+                )}
                 <Button variant="outline" onClick={handleLogout}>
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
