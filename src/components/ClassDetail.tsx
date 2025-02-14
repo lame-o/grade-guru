@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { commitSyllabusToKnowledge } from "@/utils/pdfUtils";
 import { PDFViewer } from "@/components/PDFViewer";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ClassDetailProps {
   classData: Class;
@@ -16,130 +17,210 @@ interface ClassDetailProps {
 
 export const ClassDetail = ({ classData, onUpdate }: ClassDetailProps) => {
   const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleContentAdded = (newContent: Class) => {
+  const handleContentUpload = async (file: File) => {
     const updatedClass = {
       ...classData,
-      additionalContent: [...(classData.additionalContent || []), {
-        id: newContent.id,
-        name: newContent.syllabusName,
-        uploadDate: newContent.uploadDate,
-        pdfUrl: newContent.pdfUrl || '',
-        isCommitted: false
-      }]
+      additionalContent: [
+        ...(classData.additionalContent || []),
+        {
+          id: Date.now().toString(),
+          name: file.name,
+          uploadDate: new Date().toISOString(),
+          isCommitted: false,
+        },
+      ],
     };
     onUpdate(updatedClass);
+  };
+
+  const handleViewPdf = async (pdfUrl: string | null) => {
+    setPdfError(null);
+    
+    if (!pdfUrl) {
+      setPdfError("No PDF URL available");
+      toast({
+        title: "Error",
+        description: "Cannot view PDF: URL not available",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // If it's a storage path, get the URL from Supabase
+      if (!pdfUrl.startsWith('http')) {
+        const { data } = supabase.storage
+          .from('pdfs')
+          .getPublicUrl(pdfUrl);
+          
+        if (!data?.publicUrl) {
+          setPdfError("Could not get public URL");
+          return;
+        }
+        
+        pdfUrl = data.publicUrl;
+      }
+
+      // Log the exact URL we're trying to use
+      console.log('Raw PDF URL:', pdfUrl);
+      
+      // Try to clean up any encoding issues
+      const cleanUrl = decodeURIComponent(pdfUrl);
+      console.log('Decoded PDF URL:', cleanUrl);
+      
+      setSelectedPdf(cleanUrl);
+    } catch (error) {
+      console.error('Error processing PDF URL:', error);
+      setPdfError("Error processing PDF URL");
+      toast({
+        title: "Error",
+        description: "Failed to load PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCommitContent = async (contentId: string) => {
     try {
       await commitSyllabusToKnowledge(contentId);
+      
       const updatedClass = {
         ...classData,
-        additionalContent: classData.additionalContent?.map(content => 
-          content.id === contentId 
+        additionalContent: classData.additionalContent?.map((content) =>
+          content.id === contentId
             ? { ...content, isCommitted: true }
             : content
-        )
+        ),
       };
+      
       onUpdate(updatedClass);
       toast({
         title: "Success",
-        description: "Content has been committed to the knowledge base!",
+        description: "Content committed to knowledge base",
         duration: 5000,
       });
     } catch (error) {
-      console.error('Error committing content:', error);
       toast({
         title: "Error",
         description: "Failed to commit content to knowledge base",
-        variant: "destructive",
         duration: 5000,
       });
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-start">
-        <div className="space-y-4 flex-1">
-          <div className="flex items-center space-x-4">
-            <Button onClick={() => navigate(`add-content`)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Content
-            </Button>
-          </div>
-          
-          {classData.additionalContent && classData.additionalContent.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Additional Content</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {classData.additionalContent.map((content) => (
-                  <div
-                    key={content.id}
-                    className="flex items-center justify-between p-4 bg-white rounded-lg shadow"
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">{classData.syllabusName}</h1>
+      </div>
+
+      <div className="grid grid-cols-12 gap-6">
+        {/* Main content area - Chat or PDF */}
+        <div className="col-span-9">
+          {selectedPdf ? (
+            <div className="bg-white rounded-lg shadow-md p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Document Viewer</h2>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    setSelectedPdf(null);
+                    setPdfError(null);
+                  }}
+                >
+                  Back to Chat
+                </Button>
+              </div>
+              {pdfError ? (
+                <div className="flex items-center justify-center h-[600px] text-red-500">
+                  {pdfError}
+                </div>
+              ) : (
+                <div className="h-[600px] overflow-hidden">
+                  <PDFViewer pdfUrl={selectedPdf} />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow-md h-[600px]">
+              <ChatInterface classData={classData} />
+            </div>
+          )}
+        </div>
+
+        {/* Right column - Content List */}
+        <div className="col-span-3">
+          <div className="bg-white rounded-lg shadow-md p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Course Content</h2>
+              <Button onClick={() => navigate("add-content")} variant="outline" size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add
+              </Button>
+            </div>
+            
+            <div className="space-y-3">
+              {/* Syllabus Card */}
+              <div className="border rounded-lg p-3 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <FileText className="w-4 h-4 mr-2 text-blue-500" />
+                    <span className="font-medium">Syllabus</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleViewPdf(classData.pdfUrl || null)}
                   >
-                    <div className="flex items-center space-x-4">
-                      <FileText className="w-6 h-6 text-gray-500" />
+                    View
+                  </Button>
+                </div>
+              </div>
+
+              {/* Additional Content Cards */}
+              {classData.additionalContent?.map((content) => (
+                <div key={content.id} className="border rounded-lg p-3 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FileText className="w-4 h-4 mr-2 text-blue-500" />
                       <div>
-                        <p className="font-medium">{content.name}</p>
+                        <span className="font-medium">{content.name}</span>
                         <p className="text-sm text-gray-500">
                           {new Date(content.uploadDate).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      {content.isCommitted ? (
-                        <div className="flex items-center text-green-600">
-                          <Check className="w-4 h-4 mr-1" />
-                          <span className="text-sm">Committed</span>
-                        </div>
-                      ) : (
+                    <div className="flex gap-2">
+                      {!content.isCommitted && (
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleCommitContent(content.id)}
+                          className="text-green-600 hover:text-green-700"
                         >
-                          Commit
+                          <Check className="w-4 h-4" />
                         </Button>
                       )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setSelectedPdf(content.pdfUrl)}
+                        onClick={() => handleViewPdf(content.pdfUrl)}
                       >
                         View
                       </Button>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          )}
-
-          <div className="mt-6">
-            <ChatInterface classData={classData} />
           </div>
         </div>
       </div>
-
-      {selectedPdf && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-4 rounded-lg w-[90vw] h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">PDF Viewer</h2>
-              <Button variant="ghost" onClick={() => setSelectedPdf(null)}>
-                Close
-              </Button>
-            </div>
-            <div className="flex-1">
-              <PDFViewer url={selectedPdf} />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

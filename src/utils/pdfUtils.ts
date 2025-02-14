@@ -3,7 +3,7 @@ import { Class, PDFContent } from "@/types/class";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Gemini exactly as in documentation REMEMBER TO CHANGE THE KEY
-const genAI = new GoogleGenerativeAI("AIzaSyBTuSK3svD9jVPYBRYvIg5Vie8CE_Ei14A");
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 // Initialize EXTRACTION_PROMPT
